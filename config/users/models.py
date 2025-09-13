@@ -27,7 +27,11 @@ class Follow(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("follower", "following")  # no duplicates
-
+        unique_together = ("follower", "following")
+        indexes = [
+            models.Index(fields=["follower"]),
+            models.Index(fields=["following"]),
+        ]
+        
     def __str__(self):
         return f"{self.follower} follows {self.following}"
