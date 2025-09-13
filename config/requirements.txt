@@ -1,0 +1,22 @@
+# Core
+Django>=4.2,<5.0
+psycopg2-binary>=2.9
+
+# GraphQL
+graphene-django>=3.0
+django-graphql-jwt>=0.3.4
+
+# Real-time (optional, for subscriptions)
+channels>=4.0
+channels-redis>=4.1
+
+# Utils
+django-filter>=23.5
+python-decouple>=3.8
+Pillow>=10.0
+
+# Dev Tools
+black>=24.4
+flake8>=7.0
+isort>=5.13
+django-debug-toolbar>=4.2
