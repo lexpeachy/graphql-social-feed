@@ -1,1 +1,32 @@
+# Python cache / bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyd
+*.pkl
+*.py.class
+
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+*.env
+
+# Local settings & secrets
 .env
+.env.*        
+*.sqlite3      
+
+# IDE / Editor junk
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Django stuff
+db.sqlite3
+media/
+staticfiles/
+static/

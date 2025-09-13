@@ -10,9 +10,26 @@ User = get_user_model()
 
 # GraphQL Types
 class PostType(DjangoObjectType):
+    likes_count = graphene.Int()
+    comments_count = graphene.Int()
+    shares_count = graphene.Int()
+    popularity_score = graphene.Int()
+
     class Meta:
         model = Post
-        fields = ("id", "content", "author", "created_at", "likes_count", "comments_count", "comments")
+        fields = ("id", "content", "author", "created_at")
+
+    def resolve_likes_count(self, info):
+        return self.likes.count()
+
+    def resolve_comments_count(self, info):
+        return self.comments.count()
+
+    def resolve_shares_count(self, info):
+        return self.shares.count()
+
+    def resolve_popularity_score(self, info):
+        return self.popularity_score  # uses property in model
 
 class CommentType(DjangoObjectType):
     class Meta:
