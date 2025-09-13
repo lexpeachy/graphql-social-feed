@@ -1,19 +1,33 @@
-from django.db import models
-
-# Create your models here.
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 class User(AbstractUser):
     bio = models.TextField(blank=True, null=True)
-    role =models.CharField(
+    role = models.CharField(
         max_length=20,
         choices=[
-            ('admin', 'Admin'),
-            ('moderator', 'Moderator'),
-            ('user', 'User'),
+            ("user", "User"),
+            ("moderator", "Moderator"),
+            ("admin", "Admin"),
         ],
-        default='user',
+        default="user",
     )
+
     def __str__(self):
         return self.username
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="following"
+    )
+    following = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="followers"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("follower", "following")  # no duplicates
+
+    def __str__(self):
+        return f"{self.follower} follows {self.following}"
