@@ -2,14 +2,15 @@ import os
 from pathlib import Path
 from decouple import config
 import dj_database_url
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config("SECRET_KEY", default="insecure-key")
+SECRET_KEY = config("SECRET_KEY", defalt="insecure-key")
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*", cast=lambda v: v.split(","))
 
 # Installed apps
 INSTALLED_APPS = [
@@ -65,8 +66,13 @@ ASGI_APPLICATION = "config.asgi.application"
 # Database
 
 DATABASES = {
-    "default": dj_database_url.config(default=config("DATABASE_URL"))
+    "default": dj_database_url.config(
+        default=config("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=not DEBUG,
+    )
 }
+
 
 # DATABASES = {
 #     "default": {
@@ -92,7 +98,11 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # GraphQL
@@ -107,3 +117,9 @@ AUTHENTICATION_BACKENDS = [
     "graphql_jwt.backends.JSONWebTokenBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
+
+GRAPHQL_JWT = {
+    "JWT_VERIFY_EXPIRATION": True,
+    "JWT_EXPIRATION_DELTA": timedelta(hours=2),
+    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=7),
+}
