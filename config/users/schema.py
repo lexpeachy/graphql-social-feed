@@ -4,7 +4,8 @@ from graphene_django import DjangoObjectType
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.db.models import Count
-from graphql_jwt.shortcuts import get_token
+from graphql import GraphQLError
+from graphql_jwt.shortcuts import get_token, create_refresh_token
 
 from .models import Follow
 
@@ -40,11 +41,7 @@ class FollowType(DjangoObjectType):
 # ------------------------
 class UserQuery(graphene.ObjectType):
     me = graphene.Field(UserType)
-    users = graphene.List(
-        UserType,
-        limit=graphene.Int(),
-        offset=graphene.Int()
-    )
+    users = graphene.List(UserType, limit=graphene.Int(), offset=graphene.Int())
     followers = graphene.List(UserType, user_id=graphene.Int(required=True))
     following = graphene.List(UserType, user_id=graphene.Int(required=True))
 
@@ -67,13 +64,21 @@ class UserQuery(graphene.ObjectType):
         target = User.objects.filter(id=user_id).first()
         if not target:
             return []
-        return [f.follower for f in target.followers.all()]
+        return (
+            User.objects.filter(following__following=target)
+            .select_related()
+            .annotate(following_count=Count("following"))
+        )
 
     def resolve_following(root, info, user_id):
         target = User.objects.filter(id=user_id).first()
         if not target:
             return []
-        return [f.following for f in target.following.all()]
+        return (
+            User.objects.filter(followers__follower=target)
+            .select_related()
+            .annotate(followers_count=Count("followers"))
+        )
 
 
 # ------------------------
@@ -82,6 +87,7 @@ class UserQuery(graphene.ObjectType):
 class CreateUser(graphene.Mutation):
     user = graphene.Field(UserType)
     token = graphene.String()
+    refresh_token = graphene.String()
 
     class Arguments:
         username = graphene.String(required=True)
@@ -91,29 +97,28 @@ class CreateUser(graphene.Mutation):
         role = graphene.String(required=False)
 
     def mutate(self, info, username, email, password, bio=None, role=None):
-        if User.objects.filter(username=username).exists():
-            raise Exception("Username already taken")
-        if User.objects.filter(email=email).exists():
-            raise Exception("Email already in use")
-
-        # Normalize + validate password
+        username = username.lower().strip()
         email = User.objects.normalize_email(email)
+
+        if User.objects.filter(username=username).exists():
+            raise GraphQLError("Username already taken")
+        if User.objects.filter(email=email).exists():
+            raise GraphQLError("Email already in use")
+
         validate_password(password)
 
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
-        )
+        user = User.objects.create_user(username=username, email=email, password=password)
 
         if bio:
             user.bio = bio
-        if role:
+        if role and role.lower() in ["user"]:  # restrict roles
             user.role = role
         user.save()
 
         token = get_token(user)
-        return CreateUser(user=user, token=token)
+        refresh = create_refresh_token(user)
+
+        return CreateUser(user=user, token=token, refresh_token=refresh)
 
 
 class FollowUser(graphene.Mutation):
@@ -126,13 +131,13 @@ class FollowUser(graphene.Mutation):
     def mutate(self, info, user_id):
         user = info.context.user
         if user.is_anonymous:
-            raise Exception("Authentication required")
+            raise GraphQLError("Authentication required")
 
         target = User.objects.filter(id=user_id).first()
         if not target:
-            raise Exception("Target user not found")
+            raise GraphQLError("Target user not found")
         if user == target:
-            raise Exception("You cannot follow yourself")
+            raise GraphQLError("You cannot follow yourself")
 
         follow, created = Follow.objects.get_or_create(follower=user, following=target)
         return FollowUser(follow=follow, created=created)
@@ -148,11 +153,11 @@ class UnfollowUser(graphene.Mutation):
     def mutate(self, info, user_id):
         user = info.context.user
         if user.is_anonymous:
-            raise Exception("Authentication required")
+            raise GraphQLError("Authentication required")
 
         target = User.objects.filter(id=user_id).first()
         if not target:
-            raise Exception("Target user not found")
+            raise GraphQLError("Target user not found")
 
         deleted, _ = Follow.objects.filter(follower=user, following=target).delete()
         return UnfollowUser(ok=bool(deleted), target_user_id=target.id)

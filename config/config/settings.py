@@ -6,7 +6,7 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config("SECRET_KEY", defalt="insecure-key")
+SECRET_KEY = config("SECRET_KEY", default="insecure-key")
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 
@@ -23,6 +23,8 @@ INSTALLED_APPS = [
 
     # Third-party
     "graphene_django",
+    "corsheaders",  # 🔥 Added for CORS
+    "django_crontab",  # 🔥 Added for crontab jobs
 
     # Local apps
     "users",
@@ -31,8 +33,8 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = "users.User"
 
-
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  # 🔥 Must be high in the list
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -64,7 +66,6 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 # Database
-
 DATABASES = {
     "default": dj_database_url.config(
         default=config("DATABASE_URL"),
@@ -72,18 +73,6 @@ DATABASES = {
         ssl_require=not DEBUG,
     )
 }
-
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": config("DATABASE_NAME"),
-#         "USER": config("DATABASE_USER"),
-#         "PASSWORD": config("DATABASE_PASSWORD"),
-#         "HOST": config("DATABASE_HOST"),
-#         "PORT": config("DATABASE_PORT"),
-#     }
-# }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -107,7 +96,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # GraphQL
 GRAPHENE = {
-    "SCHEMA": "config.schema.schema",  # we will create schema.py
+    "SCHEMA": "config.schema.schema",  
     "MIDDLEWARE": [
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
     ],
@@ -123,3 +112,25 @@ GRAPHQL_JWT = {
     "JWT_EXPIRATION_DELTA": timedelta(hours=2),
     "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=7),
 }
+
+# 🔥 Cron jobs 
+CRONJOBS = [
+    ("0 0 * * *", "social.cron.clean_old_posts"),          # daily at midnight
+    ("0 2 * * 0", "users.cron.deactivate_inactive_users"), # weekly on Sunday at 2am
+]
+
+
+
+CORS_ALLOWED_ORIGINS = config(
+    "CORS_ALLOWED_ORIGINS",
+    default="http://localhost:3000,http://127.0.0.1:3000",
+    cast=lambda v: [s.strip() for s in v.split(",")],
+)
+
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://localhost:3000,http://127.0.0.1:3000",
+    cast=lambda v: [s.strip() for s in v.split(",")],
+)

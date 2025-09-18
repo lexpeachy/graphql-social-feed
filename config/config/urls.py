@@ -20,6 +20,7 @@ from graphene_django.views import GraphQLView
 from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
+    # Keep GraphiQL always enabled, even in production
     path("graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True))),
 ]

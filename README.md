@@ -40,19 +40,67 @@ This project simulates the backend of a social media platform, focusing on **fle
 
 ## 🛠️ Tech Stack
 
-- **Backend:** Django, Graphene-Django
-- **Database:** PostgreSQL
-- **Auth:** JWT (via `django-graphql-jwt`)
-- **Testing Playground:** GraphiQL / Apollo Sandbox
-- **Deployment:** Render / Railway / Heroku
-- **Optional Enhancements:** Redis (caching), Django Channels (real-time subscriptions)
+- **Backend:** Django, Graphene-Django  
+- **Database:** PostgreSQL  
+- **Auth:** JWT (via `django-graphql-jwt`)  
+- **Testing Playground:** GraphiQL / Apollo Sandbox  
+- **Deployment:** Render / Railway / Heroku  
+- **Optional Enhancements:** Redis (caching), Django Channels (real-time subscriptions)  
 
 ---
 
-## 📊 Example GraphQL Queries
+## ⚙️ Setup & Installation
 
-**Fetch posts**
-```graphql
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/<your-username>/graphql-social-feed.git
+   cd graphql-social-feed
+
+Create and activate a virtual environment
+
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+
+
+Install dependencies
+
+pip install -r requirements.txt
+
+
+Configure environment variables
+Copy the example file and update with your values:
+
+cp .env.example .env
+
+
+Run migrations & create superuser
+
+python manage.py migrate
+python manage.py createsuperuser
+
+
+Start the development server
+
+python manage.py runserver
+
+
+Now open http://localhost:8000/graphql/
+ to access GraphQL Playground.
+
+🔑 Environment Variables
+
+Your .env file should include:
+
+SECRET_KEY=your-secret-key
+DEBUG=True
+DATABASE_URL=postgres://user:password@localhost:5432/socialdb
+ALLOWED_HOSTS=127.0.0.1,localhost
+
+📊 Example GraphQL Queries
+
+Fetch posts
+
 query {
   posts(limit: 5, orderBy: "-created_at") {
     id
@@ -70,3 +118,101 @@ query {
     }
   }
 }
+
+✨ Example Mutations
+
+Sign up
+
+mutation {
+  register(username: "lex", email: "lex@example.com", password: "password123") {
+    user {
+      id
+      username
+      email
+    }
+  }
+}
+
+
+Login (JWT)
+
+mutation {
+  tokenAuth(username: "lex", password: "password123") {
+    token
+  }
+}
+
+
+Create Post
+
+mutation {
+  createPost(content: "This is my first post!") {
+    post {
+      id
+      content
+      author {
+        username
+      }
+    }
+  }
+}
+
+
+Like Post
+
+mutation {
+  likePost(postId: 1) {
+    success
+    post {
+      id
+      likesCount
+    }
+  }
+}
+
+🧪 Running Tests
+
+Run unit tests with:
+
+pytest
+# or
+python manage.py test
+
+
+Generate coverage report:
+
+coverage run -m pytest
+coverage html
+
+📂 Version Control Workflow
+
+We use a simple branching strategy:
+
+main → stable, production-ready code
+
+dev → active development branch
+
+feature/* → individual features/fixes
+
+Commit message format:
+
+feat: add GraphQL mutation for creating posts
+
+fix: resolve N+1 query in comments resolver
+
+docs: update README with setup instructions
+
+🚀 Deployment (Optional)
+
+You can deploy on Render / Railway / Heroku with minimal config:
+
+Set DATABASE_URL and SECRET_KEY in environment.
+
+Run migrations:
+
+python manage.py migrate
+
+
+Start server (example with Gunicorn):
+
+gunicorn config.wsgi:application --bind 0.0.0.0:$PORT

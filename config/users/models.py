@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+
 class User(AbstractUser):
     bio = models.TextField(blank=True, null=True)
     role = models.CharField(
@@ -27,11 +28,15 @@ class Follow(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("follower", "following")
+        constraints = [
+            models.UniqueConstraint(fields=["follower", "following"], name="unique_follow")
+        ]
         indexes = [
             models.Index(fields=["follower"]),
             models.Index(fields=["following"]),
         ]
-        
+        verbose_name = "Follow"
+        verbose_name_plural = "Follows"
+
     def __str__(self):
         return f"{self.follower} follows {self.following}"
