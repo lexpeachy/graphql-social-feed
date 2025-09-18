@@ -186,7 +186,7 @@ coverage html
 
 📂 Version Control Workflow
 
-For version control I directly pushed to main since I was alone and I tested my codes before pushing the code.
+For version control I directly pushed to main since I was alone and I tested my codes before pushing.
 
 You can use a simple branching strategy:
 
@@ -199,11 +199,17 @@ feature/* → individual features/fixes
 Commit message format:
 
 feat: set up Django project with PostgreSQL
+
 feat: create models for posts, comments, and interactions
+
 feat: implement GraphQL API for querying posts and interactions
+
 feat: integrate and publish GraphQL Playground
+
 perf: optimize database queries for interactions
+
 docs: update README with API usage
+
 docs: update README with setup instructions
 
 🚀 Deployment 
