@@ -43,8 +43,8 @@ This project simulates the backend of a social media platform, focusing on **fle
 - **Backend:** Django, Graphene-Django  
 - **Database:** PostgreSQL  
 - **Auth:** JWT (via `django-graphql-jwt`)  
-- **Testing Playground:** GraphiQL / Apollo Sandbox  
-- **Deployment:** Render / Railway / Heroku  
+- **Testing Playground:** /GraphiQL
+- **Deployment:** Render
 - **Optional Enhancements:** Redis (caching), Django Channels (real-time subscriptions)  
 
 ---
@@ -53,8 +53,8 @@ This project simulates the backend of a social media platform, focusing on **fle
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/<your-username>/graphql-social-feed.git
-   cd graphql-social-feed
+   git clone https://github.com/lexpeachy/graphql-social-feed.git
+   cd config
 
 Create and activate a virtual environment
 
@@ -186,7 +186,9 @@ coverage html
 
 📂 Version Control Workflow
 
-We use a simple branching strategy:
+For version control I directly pushed to main since I was alone and I tested my codes before pushing the code.
+
+You can use a simple branching strategy:
 
 main → stable, production-ready code
 
@@ -196,15 +198,17 @@ feature/* → individual features/fixes
 
 Commit message format:
 
-feat: add GraphQL mutation for creating posts
-
-fix: resolve N+1 query in comments resolver
-
+feat: set up Django project with PostgreSQL
+feat: create models for posts, comments, and interactions
+feat: implement GraphQL API for querying posts and interactions
+feat: integrate and publish GraphQL Playground
+perf: optimize database queries for interactions
+docs: update README with API usage
 docs: update README with setup instructions
 
-🚀 Deployment (Optional)
+🚀 Deployment 
 
-You can deploy on Render / Railway / Heroku with minimal config:
+Render:
 
 Set DATABASE_URL and SECRET_KEY in environment.
 
