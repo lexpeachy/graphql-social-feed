@@ -121,12 +121,14 @@ query {
 Sign up
 
 mutation {
-  register(username: "lex", email: "lex@example.com", password: "password123") {
+  signup(username: "jane", email: "jane@example.com", password: "password123") {
     user {
       id
       username
       email
     }
+    token
+    refreshToken
   }
 }
 
@@ -134,10 +136,17 @@ mutation {
 Login (JWT)
 
 mutation {
-  tokenAuth(username: "lex", password: "password123") {
+  tokenAuth(username: "test", password: "test..123") {
+    user {
+      id
+      username
+      email
+    }
     token
+    refreshToken
   }
 }
+
 
 
 Create Post
