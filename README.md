@@ -1,7 +1,7 @@
 # GraphQL Social Feed Backend
 
 A **scalable social media feed backend** built with **Django, PostgreSQL, and GraphQL (Graphene-Django)**.  
-This project simulates the backend of a social media platform, focusing on **flexible querying, real-time interactions, and high-performance database design**.
+This project simulates the backend of a social media platform, focusing on **flexible querying and high-performance database design**.
 
 ---
 
@@ -29,9 +29,6 @@ This project simulates the backend of a social media platform, focusing on **fle
   - Personalized feed (posts from followed users)
   - Trending posts (based on interactions)
 
-- **Real-Time (Bonus)**
-  - GraphQL subscriptions for new posts and interactions
-
 - **Scalability**
   - Optimized queries with `select_related` & `prefetch_related`
   - Indexing in PostgreSQL for high-volume interactions
@@ -45,7 +42,7 @@ This project simulates the backend of a social media platform, focusing on **fle
 - **Auth:** JWT (via `django-graphql-jwt`)  
 - **Testing Playground:** /GraphiQL
 - **Deployment:** Render
-- **Optional Enhancements:** Redis (caching), Django Channels (real-time subscriptions)  
+- **Enhancements:** Redis (caching),   
 
 ---
 
