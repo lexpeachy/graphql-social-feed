@@ -1,4 +1,4 @@
-import graphene
+import graphene 
 from graphene_django import DjangoObjectType
 from django.contrib.auth import get_user_model
 from django.db.models import Count, F
@@ -12,6 +12,7 @@ User = get_user_model()
 
 # QuerySet Helpers
 class PostQuerySet:
+    # Annotate posts with counts of likes, comments, and shares
     def with_counts():
         return Post.objects.annotate(
             likes_count_annot=Count("likes"),
@@ -19,6 +20,7 @@ class PostQuerySet:
             shares_count_annot=Count("shares"),
         ).select_related("author")
 
+    # Annotate posts with a "popularity score" (weighted by likes, comments, shares)
     def with_popularity():
         return PostQuerySet.with_counts().annotate(
             popularity_score_annot=(
@@ -29,10 +31,9 @@ class PostQuerySet:
     )
 
 
-
-
 # GraphQL Types
 class PostType(DjangoObjectType):
+    # Custom fields exposed in GraphQL schema
     likes_count = graphene.Int()
     comments_count = graphene.Int()
     shares_count = graphene.Int()
@@ -51,6 +52,7 @@ class PostType(DjangoObjectType):
             "popularity_score",
         )
 
+    # Resolvers for annotated or fallback values
     def resolve_likes_count(self, info):
         return getattr(self, "likes_count_annot", self.likes.count())
 
@@ -65,7 +67,6 @@ class PostType(DjangoObjectType):
             self, "popularity_score_annot", 
             self.likes.count() * 1 + self.comments.count() * 2 + self.shares.count() * 3
         )
-
 
 
 class CommentType(DjangoObjectType):
@@ -88,6 +89,7 @@ class ShareType(DjangoObjectType):
 
 # Queries
 class SocialQuery(graphene.ObjectType):
+    # GraphQL query fields
     posts = graphene.List(
         PostType,
         limit=graphene.Int(),
@@ -98,6 +100,7 @@ class SocialQuery(graphene.ObjectType):
     personalized_feed = graphene.List(PostType, limit=graphene.Int(), offset=graphene.Int())
     trending_feed = graphene.List(PostType, limit=graphene.Int())
 
+    # Return posts with ordering, limit & offset
     def resolve_posts(root, info, limit=None, offset=None, order_by="-created_at"):
         qs = PostQuerySet.with_popularity().order_by(order_by)
         if offset:
@@ -106,9 +109,11 @@ class SocialQuery(graphene.ObjectType):
             qs = qs[:limit]
         return qs
 
+    # Return a single post by ID
     def resolve_post(root, info, id):
         return PostQuerySet.with_popularity().filter(id=id).first()
 
+    # Return posts only from users the current user follows
     def resolve_personalized_feed(root, info, limit=None, offset=None):
         user = info.context.user
         if user.is_anonymous:
@@ -122,6 +127,7 @@ class SocialQuery(graphene.ObjectType):
             qs = qs[:limit]
         return qs
 
+    # Return trending posts (cached for 60s)
     def resolve_trending_feed(root, info, limit=None):
         cache_key = f"trending_feed_{limit}"
         posts = cache.get(cache_key)
@@ -141,6 +147,7 @@ class CreatePost(graphene.Mutation):
     class Arguments:
         content = graphene.String(required=True)
 
+    # Create a new post
     def mutate(self, info, content):
         user = info.context.user
         if user.is_anonymous:
@@ -156,6 +163,7 @@ class UpdatePost(graphene.Mutation):
         post_id = graphene.Int(required=True)
         content = graphene.String(required=True)
 
+    # Update an existing post (only if user is the author)
     def mutate(self, info, post_id, content):
         user = info.context.user
         post = Post.objects.filter(id=post_id, author=user).first()
@@ -172,6 +180,7 @@ class DeletePost(graphene.Mutation):
     class Arguments:
         post_id = graphene.Int(required=True)
 
+    # Delete a post (only if user is the author)
     def mutate(self, info, post_id):
         user = info.context.user
         deleted, _ = Post.objects.filter(id=post_id, author=user).delete()
@@ -187,6 +196,7 @@ class CreateComment(graphene.Mutation):
         post_id = graphene.Int(required=True)
         text = graphene.String(required=True)
 
+    # Create a comment on a post
     def mutate(self, info, post_id, text):
         user = info.context.user
         if user.is_anonymous:
@@ -204,6 +214,7 @@ class DeleteComment(graphene.Mutation):
     class Arguments:
         comment_id = graphene.Int(required=True)
 
+    # Delete a comment (only if user is the author)
     def mutate(self, info, comment_id):
         user = info.context.user
         deleted, _ = Comment.objects.filter(id=comment_id, user=user).delete()
@@ -219,6 +230,7 @@ class LikePost(graphene.Mutation):
     class Arguments:
         post_id = graphene.Int(required=True)
 
+    # Like or unlike a post (toggle behavior)
     def mutate(self, info, post_id):
         user = info.context.user
         if user.is_anonymous:
@@ -236,6 +248,7 @@ class SharePost(graphene.Mutation):
     class Arguments:
         post_id = graphene.Int(required=True)
 
+    # Share a post (creates a Share record)
     def mutate(self, info, post_id):
         user = info.context.user
         if user.is_anonymous:
@@ -247,6 +260,7 @@ class SharePost(graphene.Mutation):
         return SharePost(share=share)
 
 
+# Root mutation class for all social-related mutations
 class SocialMutation(graphene.ObjectType):
     create_post = CreatePost.Field()
     update_post = UpdatePost.Field()
