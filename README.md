@@ -39,7 +39,7 @@ This project simulates the backend of a social media platform, focusing on **fle
 
 - **Backend:** Django, Graphene-Django  
 - **Database:** PostgreSQL  
-- **Auth:** JWT (via `django-graphql-jwt`)  
+- **Auth:** Django (backend) + GraphQL (Graphene) + JWT auth layer (django-graphql-jwt).  
 - **Testing Playground:** /GraphiQL
 - **Deployment:** Render
 - **Enhancements:** Redis (caching),   
@@ -99,73 +99,93 @@ ALLOWED_HOSTS=127.0.0.1,localhost
 Fetch posts
 
 query {
-  posts(limit: 5, orderBy: "-created_at") {
+  posts(limit: 5, offset: 0, orderBy: "-created_at") {
     id
     content
     author {
+      id
       username
     }
     likesCount
-    comments {
-      id
-      text
-      user {
-        username
-      }
-    }
+    commentsCount
+    sharesCount
+    popularityScore
+    createdAt
   }
 }
+
 
 ✨ Example Mutations
 
 Sign up
 
 mutation {
-  register(username: "lex", email: "lex@example.com", password: "password123") {
+  signup(username: "jane", email: "jane@example.com", password: "password123") {
     user {
       id
       username
       email
     }
+    token
+    refreshToken
   }
 }
+
 
 
 Login (JWT)
 
 mutation {
-  tokenAuth(username: "lex", password: "password123") {
+  tokenAuth(username: "test", password: "test..123") {
+    user {
+      id
+      username
+      email
+    }
     token
+    refreshToken
   }
 }
 
 
-Create Post
+
+Create Post(must be logged in)
 
 mutation {
-  createPost(content: "This is my first post!") {
+  createPost(content: "This is a test post") {
     post {
       id
       content
       author {
+        id
         username
       }
+      createdAt
     }
   }
 }
+
 
 
 Like Post
 
 mutation {
   likePost(postId: 1) {
-    success
-    post {
+    like {
       id
-      likesCount
+      user {
+        id
+        username
+      }
+      post {
+        id
+      }
+      createdAt
     }
+    created
   }
 }
+
 
 🧪 Running Tests
 
