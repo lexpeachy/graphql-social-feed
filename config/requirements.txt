@@ -9,14 +9,14 @@ attrs==25.3.0
 autobahn==24.4.2
 Automat==25.4.16
 cffi==2.0.0
-channels==3.0.5
+channels
 colorama==0.4.6
 constantly==23.10.4
 cryptography==45.0.7
 daphne==3.0.2
 dj-database-url==0.5.0
 Django==5.2.6
-django-channels-graphql-ws==0.9.1
+django-channels-graphql-ws
 django-cors-headers==4.8.0
 django-crontab==0.7.1
 django-graphql-jwt==0.4.0
