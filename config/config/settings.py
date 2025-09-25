@@ -23,9 +23,9 @@ INSTALLED_APPS = [
 
     # Third-party
     "graphene_django",
-    "corsheaders",  # 🔥 Added for CORS
-    "django_crontab",  # 🔥 Added for crontab jobs
-
+    "corsheaders",  # 
+    "django_crontab",
+    "graphql_jwt.refresh_token",  
     # Local apps
     "users",
     "social",
@@ -109,7 +109,8 @@ AUTHENTICATION_BACKENDS = [
 
 GRAPHQL_JWT = {
     "JWT_VERIFY_EXPIRATION": True,
-    "JWT_EXPIRATION_DELTA": timedelta(hours=2),
+    "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
+    "JWT_EXPIRATION_DELTA": timedelta(minutes=59),
     "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=7),
 }
 

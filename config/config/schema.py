@@ -1,6 +1,7 @@
 import graphene
 import graphql_jwt
-from users.schema import UserQuery, UserMutation
+
+from users.schema import UserQuery, UserMutation, CustomObtainJSONWebToken
 from social.schema import SocialQuery, SocialMutation
 
 
@@ -26,12 +27,15 @@ class Mutation(UserMutation, SocialMutation, graphene.ObjectType):
     Includes user/social mutations + JWT authentication mutations.
     """
     # JWT authentication
-    token_auth = graphql_jwt.ObtainJSONWebToken.Field(
-        description="Authenticate user and return JWT."
+    token_auth = CustomObtainJSONWebToken.Field(
+        description="Authenticate user and return both JWT and refresh token."
     )
-    verify_token = graphql_jwt.Verify.Field(description="Verify if a token is valid.")
-    refresh_token = graphql_jwt.Refresh.Field(description="Refresh JWT token.")
-
+    verify_token = graphql_jwt.Verify.Field(
+        description="Verify if a token is valid."
+    )
+    refresh_token = graphql_jwt.Refresh.Field()
+    revoke_token = graphql_jwt.Revoke.Field()
+    
 
 schema = graphene.Schema(
     query=Query,

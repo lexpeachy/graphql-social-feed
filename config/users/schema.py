@@ -1,4 +1,3 @@
-# users/schema.py
 import graphene
 from graphene_django import DjangoObjectType
 from django.contrib.auth import get_user_model
@@ -6,15 +5,13 @@ from django.contrib.auth.password_validation import validate_password
 from django.db.models import Count
 from graphql import GraphQLError
 from graphql_jwt.shortcuts import get_token, create_refresh_token
+from graphql_jwt.mixins import ObtainJSONWebTokenMixin
 
 from .models import Follow
 
 User = get_user_model()
 
-
-# ------------------------
 # GraphQL Types
-# ------------------------
 class UserType(DjangoObjectType):
     followers_count = graphene.Int()
     following_count = graphene.Int()
@@ -36,9 +33,7 @@ class FollowType(DjangoObjectType):
         fields = ("id", "follower", "following", "created_at")
 
 
-# ------------------------
 # Queries
-# ------------------------
 class UserQuery(graphene.ObjectType):
     me = graphene.Field(UserType)
     users = graphene.List(UserType, limit=graphene.Int(), offset=graphene.Int())
@@ -66,7 +61,6 @@ class UserQuery(graphene.ObjectType):
             return []
         return (
             User.objects.filter(following__following=target)
-            .select_related()
             .annotate(following_count=Count("following"))
         )
 
@@ -76,14 +70,13 @@ class UserQuery(graphene.ObjectType):
             return []
         return (
             User.objects.filter(followers__follower=target)
-            .select_related()
             .annotate(followers_count=Count("followers"))
         )
 
 
-# ------------------------
+
 # Mutations
-# ------------------------
+
 class CreateUser(graphene.Mutation):
     user = graphene.Field(UserType)
     token = graphene.String()
@@ -107,7 +100,11 @@ class CreateUser(graphene.Mutation):
 
         validate_password(password)
 
-        user = User.objects.create_user(username=username, email=email, password=password)
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+        )
 
         if bio:
             user.bio = bio
@@ -159,11 +156,45 @@ class UnfollowUser(graphene.Mutation):
         if not target:
             raise GraphQLError("Target user not found")
 
-        deleted, _ = Follow.objects.filter(follower=user, following=target).delete()
+        deleted, _ = Follow.objects.filter(
+            follower=user, following=target
+        ).delete()
+
         return UnfollowUser(ok=bool(deleted), target_user_id=target.id)
 
 
+class CustomObtainJSONWebToken(graphene.Mutation):
+    """
+    Custom login mutation that returns both access and refresh tokens.
+    """
+    user = graphene.Field(UserType)
+    token = graphene.String()
+    refresh_token = graphene.String()
+
+    class Arguments:
+        username = graphene.String(required=True)
+        password = graphene.String(required=True)
+
+    @classmethod
+    def mutate(cls, root, info, username, password):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise Exception("Invalid username or password")
+
+        if not user.check_password(password):
+            raise Exception("Invalid username or password")
+
+        token = get_token(user)
+        refresh = create_refresh_token(user)
+
+        return cls(user=user, token=token, refresh_token=refresh)
+
+
+
+# Root Mutations
 class UserMutation(graphene.ObjectType):
-    create_user = CreateUser.Field()
+    signup = CreateUser.Field()
     follow_user = FollowUser.Field()
     unfollow_user = UnfollowUser.Field()
+    login = CustomObtainJSONWebToken.Field()

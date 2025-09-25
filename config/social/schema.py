@@ -1,4 +1,3 @@
-# social/schema.py
 import graphene
 from graphene_django import DjangoObjectType
 from django.contrib.auth import get_user_model
@@ -11,34 +10,28 @@ from .models import Post, Comment, Like, Share
 User = get_user_model()
 
 
-# ------------------------
 # QuerySet Helpers
-# ------------------------
 class PostQuerySet:
-    """Reusable queryset helpers for Posts."""
-
-    @staticmethod
     def with_counts():
         return Post.objects.annotate(
-            likes_count=Count("likes"),
-            comments_count=Count("comments"),
-            shares_count=Count("shares"),
+            likes_count_annot=Count("likes"),
+            comments_count_annot=Count("comments"),
+            shares_count_annot=Count("shares"),
         ).select_related("author")
 
-    @staticmethod
     def with_popularity():
         return PostQuerySet.with_counts().annotate(
-            popularity_score=(
-                Count("likes") * 1
-                + Count("comments") * 2
-                + Count("shares") * 3
-            )
+            popularity_score_annot=(
+                F("likes_count_annot") * 1
+                + F("comments_count_annot") * 2
+                + F("shares_count_annot") * 3
         )
+    )
 
 
-# ------------------------
+
+
 # GraphQL Types
-# ------------------------
 class PostType(DjangoObjectType):
     likes_count = graphene.Int()
     comments_count = graphene.Int()
@@ -47,19 +40,32 @@ class PostType(DjangoObjectType):
 
     class Meta:
         model = Post
-        fields = ("id", "content", "author", "created_at")
+        fields = (
+            "id",
+            "content",
+            "author",
+            "created_at",
+            "likes_count",
+            "comments_count",
+            "shares_count",
+            "popularity_score",
+        )
 
     def resolve_likes_count(self, info):
-        return getattr(self, "likes_count", 0)
+        return getattr(self, "likes_count_annot", self.likes.count())
 
     def resolve_comments_count(self, info):
-        return getattr(self, "comments_count", 0)
+        return getattr(self, "comments_count_annot", self.comments.count())
 
     def resolve_shares_count(self, info):
-        return getattr(self, "shares_count", 0)
+        return getattr(self, "shares_count_annot", self.shares.count())
 
     def resolve_popularity_score(self, info):
-        return getattr(self, "popularity_score", 0)
+        return getattr(
+            self, "popularity_score_annot", 
+            self.likes.count() * 1 + self.comments.count() * 2 + self.shares.count() * 3
+        )
+
 
 
 class CommentType(DjangoObjectType):
@@ -80,9 +86,7 @@ class ShareType(DjangoObjectType):
         fields = ("id", "user", "post", "created_at")
 
 
-# ------------------------
 # Queries
-# ------------------------
 class SocialQuery(graphene.ObjectType):
     posts = graphene.List(
         PostType,
@@ -122,7 +126,7 @@ class SocialQuery(graphene.ObjectType):
         cache_key = f"trending_feed_{limit}"
         posts = cache.get(cache_key)
         if not posts:
-            qs = PostQuerySet.with_popularity().order_by("-popularity_score")
+            qs = PostQuerySet.with_popularity().order_by("-popularity_score_annot")
             if limit:
                 qs = qs[:limit]
             posts = list(qs)
@@ -130,9 +134,7 @@ class SocialQuery(graphene.ObjectType):
         return posts
 
 
-# ------------------------
 # Mutations
-# ------------------------
 class CreatePost(graphene.Mutation):
     post = graphene.Field(PostType)
 
