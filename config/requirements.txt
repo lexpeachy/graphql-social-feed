@@ -26,6 +26,7 @@ graphene==2.1.9
 graphene-django==2.16.0
 graphql-core==2.3.2
 graphql-relay==2.0.1
+gunicorn==23.0.0
 hiredis==3.2.1
 hyperlink==21.0.0
 idna==3.10
