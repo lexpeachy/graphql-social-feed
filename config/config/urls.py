@@ -18,9 +18,15 @@ from django.contrib import admin
 from django.urls import path
 from graphene_django.views import GraphQLView
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+
+
+def health_check(request):
+    return JsonResponse({"status": "ok"}, status=200)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("health/", health_check),   # ✅ monitoring endpoint
     # Keep GraphiQL always enabled, even in production
     path("graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True))),
 ]
